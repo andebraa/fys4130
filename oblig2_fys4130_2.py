@@ -1,5 +1,5 @@
 import numpy as np
-
+np.random.seed(69420)
 
 
 class wolff_class():
@@ -31,13 +31,14 @@ class wolff_class():
         p = 1 - np.exp((-2*J)/(Kb*T)) #TODO; hva skal være her?
         M = np.random.randint(0,2, size=(L,L1), dtype='int')
         M[np.where(M==0)] = -1
+        print(M)
         boundary = self.boundary
         search_neighbours = self.search_neighbours
 
 
         for i in range(self.mc_cycles):
             init_idx = np.random.randint(0,L, size=(2))
-            print(init_idx)
+
             M[boundary(init_idx)] *= -1 #gotta flip atleast one
             site = init_idx
             sites.append(site)
@@ -45,8 +46,7 @@ class wolff_class():
             while neighbours != []:
                 print('cunt')
                 for j in new_neighbour:
-                    print('j')
-                    print(j)
+
                     if np.random.uniform(0,1) > p: #with probability p
                         site = new_neighbour[j]
                         M[boundary(site)] *= -1 #flip flip flipadelphia
@@ -54,7 +54,7 @@ class wolff_class():
                         #neighbours.remove(site)
                         neighbours, new_neighbour = search_neighbours(M, neighbours, site)
                         break
-                    elif new_neighbours == []:
+                    elif new_neighbour == []:
                         break #exits one loop
                     else: #probability not reaced. Here we don't want to look for neighbours as they'll be islands
                         neighbours.remove(new_neighbour[j])
@@ -74,35 +74,35 @@ class wolff_class():
             indx (tuple of ints): index in matrix
         """
         L = self.L
-        print(indx)
         return ((indx[0] + L) % L, (indx[1] +L) %L)
 
     def search_neighbours(self, M, neighbours, site):
 
         new_neighbour = []
         boundary = self.boundary
-        print(site)
+        x = np.array((1,0))
+        y = np.array((0,1))
 
-        if M[boundary(site[0], site[1]+1) != M[site] and \
-            np.array(boundary(site[0], site[1]+1)) not in neighbours: #neightbour aligned and not already in list
-            neighbours.append(boundary(site[0], site[1]+1))
-            new_neighbour.append( np.array(boundary(site[0], site[1]+1)))
+        if np.all(M[boundary(site+y)] != M[site]) and \
+        (boundary(site+y)) not in neighbours: #neightbour aligned and not already in list
+            neighbours.append(boundary(site+y))
+            new_neighbour.append(boundary(site+y))
 
-        if M[boundary(site[0], site[1]-1)] != M[site] and \
-           np.array(boundary(site[0], site[1]-1)) not in neighbours:
-            neighbours.append( np.array(boundary(site[0], site[1]-1)))
-            new_neighbour.append( np.array(boundary(site[0], site[1]-1)))
+        if np.all(M[boundary(site-y)] != M[site]) and \
+        (boundary(site-y)) not in neighbours: #neightbour aligned and not already in list
+            neighbours.append(boundary(site-y))
+            new_neighbour.append(boundary(site-y))
 
-        if M[boundary(site[0]+1, site[1])] != M[site] and \
-           np.array(boundary(site[0]+1, site[1])) not in neighbours:
-            neighbours.append( np.array(boundary(site[0]+1, site[1])))
-            new_neighbour.append(np.array(boundary(site[0]+1, site[1])))
+        if np.all(M[boundary(site+x)] != M[site]) and \
+        (boundary(site+x)) not in neighbours: #neightbour aligned and not already in list
+            neighbours.append(boundary(site+x))
+            new_neighbour.append(boundary(site+x))
 
-        if M[boundary(site[0]-1, site[1])] != M[site] and \
-           np.array(boundary(site[0]-1, site[1])) not in neighbours:
-            neighbours.append( np.array(boundary(site[0]-1, site[1])))
-            new_neighbour.append(np.array(boundary(site[0]-1, site[1])))
-        print('twat')
+        if np.all(M[boundary(site-x)] != M[site]) and \
+        (boundary(site-x)) not in neighbours: #neightbour aligned and not already in list
+            neighbours.append(boundary(site-x))
+            new_neighbour.append(boundary(site-x))
+
         return neighbours, new_neighbour
 
     # def C(M,r):
