@@ -1,4 +1,5 @@
 import numpy as np
+import matplotlib.pyplot as plt
 np.random.seed(69420)
 
 
@@ -7,13 +8,15 @@ class wolff_class():
     class for generating a 2D or 1D matrix of spins +/- 1 and applying the wolff
     algorithm as a function of temperature
     """
-    def __init__(self,L, L1 = 1 ,mc_cycles = 1000, T = 0.1, J = 1, Kb = 1):
+    def __init__(self,L, L1 = 1 ,mc_cycles = 10000, T = 0.5, J = 1, Kb = 1,
+                 dimension = 1 ):
         self.L = L
         self.L1 = L1
         self.mc_cycles = mc_cycles
         self.J = J
         self.Kb = Kb
         self.T = T
+        self.dimension = dimension
 
     def wolff(self):
         """
@@ -32,12 +35,18 @@ class wolff_class():
         M = np.random.randint(0,2, size=(L,L1), dtype='int')
         M[np.where(M==0)] = -1
         print(M)
+        sigma_0 = 0
+        sigma_r = np.zeros(M.shape[0])
         boundary = self.boundary
         search_neighbours = self.search_neighbours
+        mc_cycles = self.mc_cycles
 
-
-        for i in range(self.mc_cycles):
-            init_idx = np.random.randint(0,L, size=(2))
+        for i in range(mc_cycles):
+            init_idx = np.random.randint(0,L, size=(self.dimension))
+            if self.dimension == 1:
+                for r in range(M.shape[0]):
+                    sigma_0 += M[0]
+                    sigma_r[r] += M[r]
 
             M[boundary(init_idx)] *= -1 #gotta flip atleast one
             site = init_idx
@@ -62,8 +71,12 @@ class wolff_class():
                 if new_neighbour == []:
                     new_neighbour.append(neighbours[0]) #if site is a dead end, first element
                                                         #of neightbours is set as next site
-        return M
 
+
+        c = (sigma_0*sigma_r)/mc_cycles #- (sigma_0/mc_cycles)*(sigma_r/mc_cycles)
+        plt.plot(c)
+        plt.show()
+        return M
 
 
     def boundary(self,indx):
@@ -74,7 +87,11 @@ class wolff_class():
             indx (tuple of ints): index in matrix
         """
         L = self.L
-        return ((indx[0] + L) % L, (indx[1] +L) %L)
+        if self.dimension ==2:
+            return ((indx[0] + L) % L, (indx[1] +L) %L)
+        else:
+            return (indx + L) %L
+
 
     def search_neighbours(self, M, neighbours, site):
 
@@ -117,6 +134,6 @@ class wolff_class():
 
 
 L = 10
-inst =wolff_class(L,L)
+inst =wolff_class(L)
 M = inst.wolff()
 print(M)
