@@ -9,7 +9,7 @@ class wolff_class():
     algorithm as a function of temperature
     """
 
-    def __init__(self, L, L1=1, mc_cycles=2, J=1, Kb=1,
+    def __init__(self, L, L1=1, mc_cycles=10000, J=1, Kb=1,
                  dimension=1):
         self.L = L
         self.L1 = L1
@@ -65,7 +65,7 @@ class wolff_class():
                         site = elem
                         M[boundary(site)] *= -1  # flip flip flipadelphia
                         sites.append(site)
-                        # neighbours.remove(site)
+                        neighbours.remove(site)
                         neighbours, new_neighbour = search_neighbours(
                                                             M, neighbours, site)
                         break
