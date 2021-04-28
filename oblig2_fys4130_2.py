@@ -38,10 +38,10 @@ class wolff_class():
             M = np.random.randint(0, 2, size=(L), dtype='int')#.reshape(-1,1)
         M[np.where(M == 0)] = -1
         print(M)
-        M_init = M
         sigma_0 = 0
         sigma_r = np.zeros(M.shape[0])#.reshape(-1,1)
         sigma_rr = np.zeros(M.shape[0])#.reshape(-1,1)
+        magnetization = np.zeros(M.shape)
         boundary = self.boundary
         search_neighbours = self.search_neighbours
         mc_cycles = self.mc_cycles
@@ -52,14 +52,13 @@ class wolff_class():
                 sigma_r += M
                 sigma_0 += M[0]
                 sigma_rr += M*M[0]
+            magnetization += M
 
             M[boundary(init_idx)] *= -1  # gotta flip atleast one
             site = init_idx
             sites.append(site)
             neighbours, new_neighbour = search_neighbours(M, neighbours, site)
-            print(neighbours)
             while neighbours != []:
-                print(neighbours)
                 for i,elem in enumerate(new_neighbour):
                     if np.random.uniform(0, 1) > p:  # with probability p
                         site = elem
@@ -87,11 +86,13 @@ class wolff_class():
         # - (sigma_0/mc_cycles)*(sigma_r/mc_cycles)
         c = sigma_rr_avg-sigma_0_avg*sigma_r_avg
         r_ = np.arange(M.shape[0])
-        r = np.linspace(0,L-1,L)
-        print(M-M_init)
-        plt.plot(r_, self.anal_c(r, T))
-        plt.plot(r,c)
-        plt.show()
+        if self.dimension == 1:
+            plt.plot(r_, self.anal_c(r, T))
+            plt.plot(r,c)
+        if self.dimension == 2:
+            m = np.sum(np.abs(magnetization))/mc_cycles
+            plt.plot(T,m, '*')
+
         return M
 
     def boundary(self, indx):
@@ -138,7 +139,6 @@ class wolff_class():
 
         else:
             x = 1
-            print('dim1')
             if M[boundary(site + x)] != M[site] and boundary(site + x) not in neighbours:  # neightbour aligned and not already in list
                 neighbours.append(boundary(site + x))
                 new_neighbour.append(boundary(site + x))
@@ -160,18 +160,20 @@ class wolff_class():
         c2 = ((1/np.tanh(beta*J))**r)/(1+(1/np.tanh(beta*J))**L)
         return c1 + c2
 
-    def m(self,M):
-        return np.sum(M)
+    def plot_c(self, M, c):
+        plt.plot(r_, self.anal_c(r, T))
+        plt.plot(r,c)
 
+#
+# L = 1000
+# inst = wolff_class(L)
+# T = 10
+# M = inst.wolff(T)
+# print(M)
 
-L = 30
-inst = wolff_class(L)
-T = 10
-M = inst.wolff(T)
-print(M)
-
-# Ts = np.linspace(0,1,20)
-# for T in Ts:
-#     L = 10
-#     inst = wolff_class(L, L, dimension = 2)
-#     M = inst.wolff()
+Ts = np.linspace(0,60,30)
+for T in Ts:
+    L = 16
+    inst = wolff_class(L, L, dimension = 2)
+    M = inst.wolff(T)
+plt.show()
