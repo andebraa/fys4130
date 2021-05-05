@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-np.random.seed(6942069)
+np.random.seed(69420)
 
 
 class wolff_class():
@@ -9,7 +9,7 @@ class wolff_class():
     algorithm as a function of temperature
     """
 
-    def __init__(self, L, L1=1, mc_cycles=1, J=1, Kb=1,
+    def __init__(self, L, L1=1, mc_cycles=10000, J=1, Kb=1,
                  dimension=1):
         self.L = L
         self.L1 = L1
@@ -22,33 +22,26 @@ class wolff_class():
         """
         Applies the wolf algorithm on a generated (L,L1) matrix
         """
-
         L = self.L
         L1 = self.L1
         J = self.J
         Kb = self.Kb
-        if L1 > 1:
-            self.dimension = 2
-            print('dimension = 2')
+        sites = []  # indexes
         neighbours = []  # all neighbours are opposite to site once site is flipped
-        visited = []
 
         #p = 1 - np.exp((-2 * J) / (Kb * T))  # TODO; hva skal være her?
         p = 1- np.exp(-2*(1/T))
+        print(p)
         if self.dimension == 2:
             M = np.random.randint(0, 2, size=(L, L1), dtype='int')
         else:
             M = np.random.randint(0, 2, size=(L), dtype='int')#.reshape(-1,1)
         M[np.where(M == 0)] = -1
-        m_init = M
         print(M)
-        M_ = M
-
-
         sigma_0 = 0
         sigma_r = np.zeros(M.shape[0])#.reshape(-1,1)
         sigma_rr = np.zeros(M.shape[0])#.reshape(-1,1)
-        mag = 0
+        magnetization = np.zeros(M.shape)
         boundary = self.boundary
         search_neighbours = self.search_neighbours
         mc_cycles = self.mc_cycles
@@ -59,24 +52,21 @@ class wolff_class():
                 sigma_r += M
                 sigma_0 += M[0]
                 sigma_rr += M*M[0]
-            mag += np.sum(M)
-            #mag2 += np.abs(np.sum(M**2))
+            magnetization += M
 
             M[boundary(init_idx)] *= -1  # gotta flip atleast one
-            visited.append(init_idx)
             site = init_idx
-            neighbours, new_neighbour = search_neighbours(M, neighbours, visited, site)
+            sites.append(site)
+            neighbours, new_neighbour = search_neighbours(M, neighbours, site)
             while neighbours != []:
                 for i,elem in enumerate(new_neighbour):
                     if np.random.uniform(0, 1) > p:  # with probability p
                         site = elem
-                        #M[boundary((site[0], site[1]),tuple=True)] *= -1  # flip flip flipadelphia
-                        M[boundary(site,tuple=True)] *= -1
+                        M[boundary(site)] *= -1  # flip flip flipadelphia
+                        sites.append(site)
                         neighbours.remove(site)
                         neighbours, new_neighbour = search_neighbours(
-                                                M, neighbours, visited, site)
-                        M_[site] = 99
-                        print(M_)
+                                                            M, neighbours, site)
                         break
                     elif new_neighbour == []: #No neighbours that can be flipped
                         break  # exits one loop,
@@ -97,16 +87,17 @@ class wolff_class():
         c = sigma_rr_avg-sigma_0_avg*sigma_r_avg
         r_ = np.arange(M.shape[0])
         if self.dimension == 1:
-            plt.plot(r_, self.anal_c(r_, T), label='analytic')
+            plt.plot(r_, self.anal_c(r_, T), label='analytical')
             plt.plot(r_,c, label='numerical')
             plt.legend()
-
+            plt.title('C(r) for T=1, 10000 mc cycles')
         if self.dimension == 2:
-            m = mag/(mc_cycles*L**2)
+            m = np.sum(np.abs(magnetization))/mc_cycles
             plt.plot(T,m, '*')
+
         return M
 
-    def boundary(self, indx, tuple = False):
+    def boundary(self, indx):
         """
         the remainder in the devision will assert periodic bounadry conditions
         also makes search_neighbours useful for L1=1 aswell
@@ -114,47 +105,39 @@ class wolff_class():
             indx (tuple of ints): index in matrix
         """
         L = self.L
-        if tuple:
+        if self.dimension == 2:
             return ((indx[0] + L) % L, (indx[1] + L) % L)
         else:
             return (indx + L) % L
 
-    def search_neighbours(self, M, neighbours, visited, site):
+    def search_neighbours(self, M, neighbours, site):
+
         new_neighbour = []
         boundary = self.boundary
         if self.dimension == 2:
             x = np.array((1, 0))
             y = np.array((0, 1))
-            print(site)
-            print(site+y)
-            print(site + x)
-
-            if (M[site[0], boundary(site[1] + 1)] != M[site[0], site[1]]) and (boundary(site + y, tuple =True)
+            if np.all(M[boundary(site + y)] != M[site]) and (boundary(site + y)
                                                              ) not in neighbours:  # neightbour aligned and not already in list
-                neighbours.append((site[0], boundary(site[1]  + 1)))
-                new_neighbour.append((site[0], boundary(site[1]  + 1)))
-                visited.append((site[0], boundary(site[1]  + 1)))
+                neighbours.append(boundary(site + y))
+                new_neighbour.append(boundary(site + y))
 
-            if (M[site[0], boundary(site[1] - 1)] != M[site[0], site[1]]) and (boundary(site - y, tuple =True)
+            if np.all(M[boundary(site - y)] != M[site]) and (boundary(site - y)
                                                              ) not in neighbours:  # neightbour aligned and not already in list
-                neighbours.append((site[0], boundary(site[1]  - 1)))
-                new_neighbour.append((site[0], boundary(site[1]  - 1)))
-                visited.append((site[0], boundary(site[1]  + 1)))
+                neighbours.append(boundary(site - y))
+                new_neighbour.append(boundary(site - y))
 
 
-            if (M[boundary(site[0]+1), site[1]] != M[site[0], site[1]]) and (boundary(site + x, tuple =True)
+            if np.all(M[boundary(site + x)] != M[site]) and (boundary(site + x)
                                                              ) not in neighbours:  # neightbour aligned and not already in list
-                neighbours.append((boundary(site[0]+1), site[1]))
-                new_neighbour.append((boundary(site[0]+1), site[1]))
-                visited.append((site[0], boundary(site[1]  + 1)))
+                neighbours.append(boundary(site + x))
+                new_neighbour.append(boundary(site + x))
 
 
-            if (M[boundary(site[0]-1), site[1]] != M[site[0], site[1]]) and (boundary(site - x, tuple =True)
+            if np.all(M[boundary(site - x)] != M[site]) and (boundary(site - x)
                                                              ) not in neighbours:  # neightbour aligned and not already in list
-                neighbours.append((boundary(site[0]-1), site[1]))
-                new_neighbour.append((boundary(site[0]-1), site[1]))
-                visited.append((site[0], boundary(site[1]  + 1)))
-
+                neighbours.append(boundary(site - x))
+                new_neighbour.append(boundary(site - x))
 
         else:
             x = 1
@@ -180,27 +163,20 @@ class wolff_class():
         return c1 + c2
 
     def plot_c(self, M, c):
-        plt.plot(r_, self.anal_c(r, T), label='analytic')
-        plt.plot(r,c, label='numerical')
-        plt.legend()
+        plt.plot(r_, self.anal_c(r, T))
+        plt.plot(r,c)
 
 #
-# L = 16
-# inst = wolff_class(L)
-# T = 0.7
-# M = inst.wolff(T)
-# print(M)
-# plt.show()
+L = 16
+inst = wolff_class(L)
+T = 1
+M = inst.wolff(T)
+plt.show()
+print(M)
 
-# Ts = np.linspace(1,5,10)
+# Ts = np.linspace(0,60,30)
 # for T in Ts:
 #     L = 16
 #     inst = wolff_class(L, L, dimension = 2)
 #     M = inst.wolff(T)
 # plt.show()
-#
-T = 1
-L = 10
-inst = wolff_class(L, L, dimension = 2)
-M = inst.wolff(T)
-plt.show()
