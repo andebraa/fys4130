@@ -87,7 +87,7 @@ class wolff_class():
                     # if site is a dead end, first element
                     try:
                         new_neighbour.append(neighbours[0])
-                    except:
+                    except: #neighbours is empty, and we are done
                         break
                     # of neightbours is set as next site
         sigma_r_avg = sigma_r/mc_cycles
@@ -104,7 +104,7 @@ class wolff_class():
         if self.dimension == 2:
             m = mag/(mc_cycles*L**2)
             plt.plot(T,m, '*')
-        return M
+        return M, m
 
     def boundary(self, indx, tuple = False):
         """
@@ -129,36 +129,36 @@ class wolff_class():
             print(site+y)
             print(site + x)
 
-        if (M[boundary(site + y, tuple =True)] != M[site[0], site[1]]) and boundary(site + y, tuple =True)\
-                                                          not in neighbours: # neightbour aligned and not already in list
+            if (M[boundary(site + y, tuple =True)] != M[site[0], site[1]]) and boundary(site + y, tuple =True)\
+                                                              not in neighbours: # neightbour aligned and not already in list
 
-            if (boundary(site + y, tuple =True)) not in visited:
-                neighbours.append((site[0], boundary(site[1] + 1)))
-                new_neighbour.append((site[0], boundary(site[1] + 1)))
-                visited.append((site[0], boundary(site[1] + 1)))
+                if (boundary(site + y, tuple =True)) not in visited:
+                    neighbours.append((site[0], boundary(site[1] + 1)))
+                    new_neighbour.append((site[0], boundary(site[1] + 1)))
+                    visited.append((site[0], boundary(site[1] + 1)))
 
-        if (M[boundary(site - y, tuple =True)] != M[site[0], site[1]]) and (boundary(site - y, tuple =True)
-                                                         ) not in neighbours:  # neightbour aligned and not already in list
-            if boundary(site - y, tuple =True) not in visited:
-                neighbours.append((site[0], boundary(site[1] - 1)))
-                new_neighbour.append((site[0], boundary(site[1] - 1)))
-                visited.append((site[0], boundary(site[1] - 1)))
-
-
-        if (M[boundary(site + x, tuple =True)] != M[site[0], site[1]]) and (boundary(site + x, tuple =True)
-                                                         ) not in neighbours:  # neightbour aligned and not already in list
-            if boundary(site + x, tuple =True) not in visited:
-                neighbours.append((boundary(site[0]+1), site[1]))
-                new_neighbour.append((boundary(site[0]+1), site[1]))
-                visited.append((boundary(site[0]+1), site[1]))
+            if (M[boundary(site - y, tuple =True)] != M[site[0], site[1]]) and (boundary(site - y, tuple =True)
+                                                             ) not in neighbours:  # neightbour aligned and not already in list
+                if boundary(site - y, tuple =True) not in visited:
+                    neighbours.append((site[0], boundary(site[1] - 1)))
+                    new_neighbour.append((site[0], boundary(site[1] - 1)))
+                    visited.append((site[0], boundary(site[1] - 1)))
 
 
-        if (M[boundary(site - x, tuple =True)] != M[site[0], site[1]]) and (boundary(site - x, tuple =True)
-                                                         ) not in neighbours:  # neightbour aligned and not already in list
-            if boundary(site - x, tuple =True) not in visited:
-                neighbours.append((boundary(site[0]-1), site[1]))
-                new_neighbour.append((boundary(site[0]-1), site[1]))
-                visited.append((boundary(site[0]-1), site[1]))
+            if (M[boundary(site + x, tuple =True)] != M[site[0], site[1]]) and (boundary(site + x, tuple =True)
+                                                             ) not in neighbours:  # neightbour aligned and not already in list
+                if boundary(site + x, tuple =True) not in visited:
+                    neighbours.append((boundary(site[0]+1), site[1]))
+                    new_neighbour.append((boundary(site[0]+1), site[1]))
+                    visited.append((boundary(site[0]+1), site[1]))
+
+
+            if (M[boundary(site - x, tuple =True)] != M[site[0], site[1]]) and (boundary(site - x, tuple =True)
+                                                             ) not in neighbours:  # neightbour aligned and not already in list
+                if boundary(site - x, tuple =True) not in visited:
+                    neighbours.append((boundary(site[0]-1), site[1]))
+                    new_neighbour.append((boundary(site[0]-1), site[1]))
+                    visited.append((boundary(site[0]-1), site[1]))
 
 
         else: #not updated
@@ -196,16 +196,17 @@ class wolff_class():
 # M = inst.wolff(T)
 # print(M)
 # plt.show()
-
-# Ts = np.linspace(1,5,10)
-# for T in Ts:
-#     L = 16
-#     inst = wolff_class(L, L, dimension = 2)
-#     M = inst.wolff(T)
-# plt.show()
-#
-T = 1
-L = 10
+L = 16
 inst = wolff_class(L, L, dimension = 2)
-M = inst.wolff(T)
+Ts = np.linspace(1,50,100)
+m = np.zeros(len(Ts))
+for i,T in enumerate(Ts):
+    M,m[i] = inst.wolff(T)
+plt.plot(Ts,m)
 plt.show()
+#
+# T = 1
+# L = 10
+# inst = wolff_class(L, L, dimension = 2)
+# M = inst.wolff(T)
+# plt.show()
