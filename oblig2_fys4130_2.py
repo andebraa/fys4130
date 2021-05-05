@@ -63,7 +63,7 @@ class wolff_class():
             #mag2 += np.abs(np.sum(M**2))
 
             M[boundary(init_idx)] *= -1  # gotta flip atleast one
-            visited.append(init_idx)
+            visited.append(boundary(init_idx, tuple=True))
             site = init_idx
             neighbours, new_neighbour = search_neighbours(M, neighbours, visited, site)
             while neighbours != []:
@@ -129,36 +129,41 @@ class wolff_class():
             print(site+y)
             print(site + x)
 
-            if (M[site[0], boundary(site[1] + 1)] != M[site[0], site[1]]) and (boundary(site + y, tuple =True)
-                                                             ) not in neighbours:  # neightbour aligned and not already in list
-                neighbours.append((site[0], boundary(site[1]  + 1)))
-                new_neighbour.append((site[0], boundary(site[1]  + 1)))
-                visited.append((site[0], boundary(site[1]  + 1)))
+        if (M[boundary(site + y, tuple =True)] != M[site[0], site[1]]) and boundary(site + y, tuple =True)\
+                                                          not in neighbours: # neightbour aligned and not already in list
 
-            if (M[site[0], boundary(site[1] - 1)] != M[site[0], site[1]]) and (boundary(site - y, tuple =True)
-                                                             ) not in neighbours:  # neightbour aligned and not already in list
-                neighbours.append((site[0], boundary(site[1]  - 1)))
-                new_neighbour.append((site[0], boundary(site[1]  - 1)))
-                visited.append((site[0], boundary(site[1]  + 1)))
+            if (boundary(site + y, tuple =True)) not in visited:
+                neighbours.append((site[0], boundary(site[1] + 1)))
+                new_neighbour.append((site[0], boundary(site[1] + 1)))
+                visited.append((site[0], boundary(site[1] + 1)))
+
+        if (M[boundary(site - y, tuple =True)] != M[site[0], site[1]]) and (boundary(site - y, tuple =True)
+                                                         ) not in neighbours:  # neightbour aligned and not already in list
+            if boundary(site - y, tuple =True) not in visited:
+                neighbours.append((site[0], boundary(site[1] - 1)))
+                new_neighbour.append((site[0], boundary(site[1] - 1)))
+                visited.append((site[0], boundary(site[1] - 1)))
 
 
-            if (M[boundary(site[0]+1), site[1]] != M[site[0], site[1]]) and (boundary(site + x, tuple =True)
-                                                             ) not in neighbours:  # neightbour aligned and not already in list
+        if (M[boundary(site + x, tuple =True)] != M[site[0], site[1]]) and (boundary(site + x, tuple =True)
+                                                         ) not in neighbours:  # neightbour aligned and not already in list
+            if boundary(site + x, tuple =True) not in visited:
                 neighbours.append((boundary(site[0]+1), site[1]))
                 new_neighbour.append((boundary(site[0]+1), site[1]))
-                visited.append((site[0], boundary(site[1]  + 1)))
+                visited.append((boundary(site[0]+1), site[1]))
 
 
-            if (M[boundary(site[0]-1), site[1]] != M[site[0], site[1]]) and (boundary(site - x, tuple =True)
-                                                             ) not in neighbours:  # neightbour aligned and not already in list
+        if (M[boundary(site - x, tuple =True)] != M[site[0], site[1]]) and (boundary(site - x, tuple =True)
+                                                         ) not in neighbours:  # neightbour aligned and not already in list
+            if boundary(site - x, tuple =True) not in visited:
                 neighbours.append((boundary(site[0]-1), site[1]))
                 new_neighbour.append((boundary(site[0]-1), site[1]))
-                visited.append((site[0], boundary(site[1]  + 1)))
+                visited.append((boundary(site[0]-1), site[1]))
 
 
-        else:
+        else: #not updated
             x = 1
-            if M[boundary(site + x)] != M[site] and boundary(site + x) not in neighbours:  # neightbour aligned and not already in list
+            if np.all(M[boundary(site + x)] != M[site]) and boundary(site + x) not in neighbours:  # neightbour aligned and not already in list
                 neighbours.append(boundary(site + x))
                 new_neighbour.append(boundary(site + x))
 
