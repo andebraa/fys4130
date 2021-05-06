@@ -33,58 +33,66 @@ class wolff_class():
         neighbours = []  # all neighbours are opposite to site once site is flipped
         visited = []
 
-        #p = 1 - np.exp((-2 * J) / (Kb * T))  # TODO; hva skal være her?
+
         p = 1- np.exp(-2*(1/T))
         if self.dimension == 2:
             M = np.random.randint(0, 2, size=(L, L1), dtype='int')
         else:
             M = np.random.randint(0, 2, size=(L), dtype='int')#.reshape(-1,1)
         M[np.where(M == 0)] = -1
-        m_init = M
-        print(M)
-        M_ = M
+        change = np.zeros_like(M)
 
 
         sigma_0 = 0
         sigma_r = np.zeros(M.shape[0])#.reshape(-1,1)
         sigma_rr = np.zeros(M.shape[0])#.reshape(-1,1)
         mag = 0
+        mag2 = 0
         boundary = self.boundary
         search_neighbours = self.search_neighbours
         mc_cycles = self.mc_cycles
 
         for i in range(mc_cycles):
             init_idx = np.random.randint(0, L, size=(self.dimension))
+            print(init_idx)
             if self.dimension == 1:
                 sigma_r += M
                 sigma_0 += M[0]
                 sigma_rr += M*M[0]
             mag += np.sum(M)
+            mag2 += np.sum(M**2)
             #mag2 += np.abs(np.sum(M**2))
 
             M[boundary(init_idx)] *= -1  # gotta flip atleast one
             visited.append(boundary(init_idx, tuple=True))
             site = init_idx
             neighbours, new_neighbour = search_neighbours(M, neighbours, visited, site)
+            print(neighbours, new_neighbour)
+            print(M)
             while neighbours != []:
+                print(neighbours)
                 for i,elem in enumerate(new_neighbour):
                     if np.random.uniform(0, 1) > p:  # with probability p
                         site = elem
                         #M[boundary((site[0], site[1]),tuple=True)] *= -1  # flip flip flipadelphia
                         M[boundary(site,tuple=True)] *= -1
-                        neighbours.remove(site)
+                        print(M)
+                        visited.append(elem)
+                        neighbours.remove(elem)
+
                         neighbours, new_neighbour = search_neighbours(
                                                 M, neighbours, visited, site)
-                        M_[site] = 99
-                        print(M_)
+
                         break
                     elif new_neighbour == []: #No neighbours that can be flipped
+                        print('break')
                         break  # exits one loop,
                     else:  # probability not reaced. Here we don't want to look for neighbours as they'll be islands
                         neighbours.remove(elem)
                         del new_neighbour[i]
                 if new_neighbour == []: #If no neighbours of site can be flipped, fetch previous neighbours that got skipped
                     # if site is a dead end, first element
+                    print('2')
                     try:
                         new_neighbour.append(neighbours[0])
                     except: #neighbours is empty, and we are done
@@ -103,7 +111,7 @@ class wolff_class():
 
         if self.dimension == 2:
             m = mag/(mc_cycles*L**2)
-            plt.plot(T,m, '*')
+
         return M, m
 
     def boundary(self, indx, tuple = False):
@@ -125,9 +133,6 @@ class wolff_class():
         if self.dimension == 2:
             x = np.array((1, 0))
             y = np.array((0, 1))
-            print(site)
-            print(site+y)
-            print(site + x)
 
             if (M[boundary(site + y, tuple =True)] != M[site[0], site[1]]) and boundary(site + y, tuple =True)\
                                                               not in neighbours: # neightbour aligned and not already in list
@@ -196,17 +201,18 @@ class wolff_class():
 # M = inst.wolff(T)
 # print(M)
 # plt.show()
-L = 16
-inst = wolff_class(L, L, dimension = 2)
-Ts = np.linspace(1,50,100)
+# L = 16
+# inst = wolff_class(L, L, dimension = 2)
+
+Ts = np.linspace(1E-1,10,100)
 m = np.zeros(len(Ts))
 for i,T in enumerate(Ts):
     M,m[i] = inst.wolff(T)
 plt.plot(Ts,m)
 plt.show()
-#
-# T = 1
-# L = 10
-# inst = wolff_class(L, L, dimension = 2)
-# M = inst.wolff(T)
-# plt.show()
+
+T = 10
+L = 10
+inst = wolff_class(L, L, dimension = 2)
+M = inst.wolff(T)
+plt.show()
