@@ -64,18 +64,17 @@ def search_neighbours(M, neighbours, visited, site):
 T_arr = np.linspace(1E-1,10,50)
 mag = np.zeros(len(T_arr))
 mag2 = np.zeros(len(T_arr))
-mc_cycles = 5000
+mc_cycles = 1000
 
 for t,T in enumerate(T_arr):
     site = np.random.randint(0, L, size=(2))
     state = M[boundary(site,tuple=True)]
     M[boundary(site, tuple=True)]*=-1
+    M_init = np.array(M)
 
-    for i in range(mc_cycles):
+    for cycle in range(mc_cycles):
 
-
-
-        p = 1- np.exp(-2*(1/T))
+        p = 1 - np.exp(-2*(1/T))
         dimension = 2
         neighbours = []
         visited = []
@@ -88,12 +87,13 @@ for t,T in enumerate(T_arr):
             for ind,i in enumerate(new_neighbour):
 
                 new_neighbour.remove(i)
-                if np.random.uniform(0, 1) > p:
+                if np.random.uniform(0, 1) < p:
                     M[boundary(site, tuple=True)]*=-1
                     site = i
                     visited.append(boundary(site, tuple=True))
                     neighbours.remove(site)
                     neighbours, new_neighbour = search_neighbours(M, neighbours, visited, site)
+
                     break
                 else:  # probability not reaced. Here we don't want to look for neighbours as they'll be islands
                     neighbours.remove(i)
@@ -103,20 +103,27 @@ for t,T in enumerate(T_arr):
                 except: #neighbours is empty, and we are done
                     break
         mag[t] += np.sum(M)
-        for i in range(len(M[0])):
-            for j in range(len(M[0])):
-                mag2[t] += np.sum(M[i]*M[j])
+        # for e in range(len(M[0])):
+        #     for f in range(len(M[0])):
+        #         mag2[t] += mag[t]*M[e,f]
+        for e in range(len(M[0])):
+            for r in range(len(M[0])):
+                mag2[t] += np.sum(M[e]*M[r])
 
 
+        site = np.random.randint(0, L, size=(2))
+
+
+        #print(M_init)
     m = mag/(mc_cycles*L**2)
-    m2 = mag2/(mc_cycles*L**2)
-
+    m2 = mag2/(mc_cycles*L**4)
+#
 plt.semilogx(T_arr,m)
 plt.xlabel('T/J')
 plt.ylabel('<m>')
 plt.show()
 print(M)
 plt.semilogx(T_arr, m2)
-plt.xlabel('T/J')
-plt.ylabel('<m>')
+plt.xlabel(r'T/J')
+plt.ylabel(r'$<m^2>$')
 plt.show()

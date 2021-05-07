@@ -27,8 +27,10 @@ class wolff_class():
         L1 = self.L1
         J = self.J
         Kb = self.Kb
+        self.tuple_bool = False
         if L1 > 1:
             self.dimension = 2
+            self.tuple_bool = True
             print('dimension = 2')
         neighbours = []  # all neighbours are opposite to site once site is flipped
         visited = []
@@ -40,8 +42,6 @@ class wolff_class():
         else:
             M = np.random.randint(0, 2, size=(L), dtype='int')#.reshape(-1,1)
         M[np.where(M == 0)] = -1
-        change = np.zeros_like(M)
-
 
         sigma_0 = 0
         sigma_r = np.zeros(M.shape[0])#.reshape(-1,1)
@@ -64,7 +64,7 @@ class wolff_class():
             #mag2 += np.abs(np.sum(M**2))
 
             M[boundary(init_idx)] *= -1  # gotta flip atleast one
-            visited.append(boundary(init_idx, tuple=True))
+            visited.append(boundary(init_idx, tuple=self.tuple_bool))
             site = init_idx
             neighbours, new_neighbour = search_neighbours(M, neighbours, visited, site)
             print(neighbours, new_neighbour)
@@ -72,10 +72,11 @@ class wolff_class():
             while neighbours != []:
                 print(neighbours)
                 for i,elem in enumerate(new_neighbour):
+                    new_neighbour.remove(i)
                     if np.random.uniform(0, 1) > p:  # with probability p
                         site = elem
-                        #M[boundary((site[0], site[1]),tuple=True)] *= -1  # flip flip flipadelphia
-                        M[boundary(site,tuple=True)] *= -1
+                        #M[boundary((site[0], site[1]),tuple=self.tuple_bool)] *= -1  # flip flip flipadelphia
+                        M[boundary(site,tuple=self.tuple_bool)] *= -1
                         print(M)
                         visited.append(elem)
                         neighbours.remove(elem)
@@ -108,11 +109,14 @@ class wolff_class():
             plt.plot(r_, self.anal_c(r_, T), label='analytic')
             plt.plot(r_,c, label='numerical')
             plt.legend()
+            m=0
 
         if self.dimension == 2:
             m = mag/(mc_cycles*L**2)
 
+
         return M, m
+
 
     def boundary(self, indx, tuple = False):
         """
@@ -185,8 +189,12 @@ class wolff_class():
         L = self.L
         J = self.J
         beta = 1/T
-        c1 = (np.tanh(beta*J)**r)/(1+np.tanh(beta*J)**L)
-        c2 = ((1/np.tanh(beta*J))**r)/(1+(1/np.tanh(beta*J))**L)
+        lambda_p = np.exp(beta*J) + np.exp(-beta*J)
+        lambda_m = np.exp(beta*J) - np.exp(-beta*J)
+        tanh = lambda_m/lambda_p
+        coth = 1/tanh
+        c1 = (tanh**r)/(1+tanh**L)
+        c2 = (coth**r)/(1+coth**L)
         return c1 + c2
 
     def plot_c(self, M, c):
@@ -195,24 +203,27 @@ class wolff_class():
         plt.legend()
 
 #
-# L = 16
-# inst = wolff_class(L)
-# T = 0.7
-# M = inst.wolff(T)
-# print(M)
-# plt.show()
+L = 16
+inst = wolff_class(L, dimension = 1)
+T = 0.7
+M = inst.wolff(T)
+print(M)
+plt.show()
+
+
+
 # L = 16
 # inst = wolff_class(L, L, dimension = 2)
-
-Ts = np.linspace(1E-1,10,100)
-m = np.zeros(len(Ts))
-for i,T in enumerate(Ts):
-    M,m[i] = inst.wolff(T)
-plt.plot(Ts,m)
-plt.show()
-
-T = 10
-L = 10
-inst = wolff_class(L, L, dimension = 2)
-M = inst.wolff(T)
-plt.show()
+#
+# Ts = np.linspace(1E-1,10,100)
+# m = np.zeros(len(Ts))
+# for i,T in enumerate(Ts):
+#     M,m[i] = inst.wolff(T)
+# plt.plot(Ts,m)
+# plt.show()
+#
+# T = 10
+# L = 10
+# inst = wolff_class(L, L, dimension = 2)
+# M = inst.wolff(T)
+# plt.show()
